@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="3368dfa4-f7c5-4fd7-8d47-89071df088f6" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<flow name="send-dataFlow" doc:id="52f303df-5af8-4a32-8215-e89f18d6459c" >
+		<http:listener doc:name="Listener" doc:id="ba426b6e-48e0-4f47-bcda-aa31471dce27" config-ref="HTTP_Listener_config" path="postdata" allowedMethods="POST"/>
+		<scatter-gather doc:name="Scatter-Gather" doc:id="face5db8-66b2-4c04-92e6-326fabd85654" >
+			<route >
+				<ee:transform doc:name="to csv" doc:id="01a64a49-319c-4651-90dd-5d3f8c77e44d">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/csv header = false
+//this will remove the header from csv columns
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+				<file:write doc:name="Write to CSV" doc:id="7ac79d09-f93c-4ea8-b054-8fede8af9f88" path="C:\fish\mulesoft\training\post_data.csv" mode="APPEND" />
+			</route>
+			<route >
+				<ee:transform doc:name="to json" doc:id="0a582c67-36f7-43f4-94ad-466ef7f36845">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+vars.data]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+			</ee:variables>
+		</ee:transform>
+				<file:write doc:name="Write to json" doc:id="a6a8f387-f519-46c1-82bd-857555a84a2e" path="C:\fish\mulesoft\training\post_data.json" mode="APPEND" />
+			</route>
+		</scatter-gather>
+		<logger level="INFO" doc:name="Logger" doc:id="4d93aabc-1a69-4a1f-afc1-2b7c53a6262e" message="data sent successful"/>
+		<ee:transform doc:name="Transform Message" doc:id="b984fdd5-43fc-465d-be6b-50d1c0204670" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	'message': 'data written successfully',
+	'code': 200
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
